@@ -12,7 +12,7 @@ show(tx)
 
 rtpm = propagationModel("raytracing", ...
     Method="sbr", ...
-    MaxNumReflections=1, ...
+    MaxNumReflections=3, ...
     BuildingsMaterial="concrete", ...
     TerrainMaterial="concrete");
 
@@ -204,6 +204,89 @@ coverage(tx, rtpm, ...
     Transparency=0.4)
 
 pause(20);
+
+% Расчет теоретического RSRP для точек
+Txpower = 40;  % Мощность передатчика (dBm)
+antGain = 12;  % Коэффициент усиления антенны (dBi)
+feedet = 3;    % Потери от фидера (dB)
+BW = 10e6;     % Ширина полосы (Hz)
+rsrp_freq = 15e3;  % Частота RSRP (Hz)
+
+D1 = distance(tx.Latitude, tx.Longitude, rx1.Latitude, rx1.Longitude); % Расстояние от TX к RX1
+D2 = distance(tx.Latitude, tx.Longitude, rx2.Latitude, rx2.Longitude); % Расстояние от TX к RX2
+D3 = distance(tx.Latitude, tx.Longitude, rx3.Latitude, rx3.Longitude); % Расстояние от TX к RX3
+D4 = distance(tx.Latitude, tx.Longitude, rx4.Latitude, rx4.Longitude); % Расстояние от TX к RX4
+
+% Теоретический расчет RSRP
+theoretical_rsrp1 = theoretical_RSRP(D1, Txpower, antGain, feedet, BW, rsrp_freq);
+theoretical_rsrp2 = theoretical_RSRP(D2, Txpower, antGain, feedet, BW, rsrp_freq);
+theoretical_rsrp3 = theoretical_RSRP(D3, Txpower, antGain, feedet, BW, rsrp_freq);
+theoretical_rsrp4 = theoretical_RSRP(D4, Txpower, antGain, feedet, BW, rsrp_freq);
+
+disp("Theoretical RSRP for RX1: " + theoretical_rsrp1 + " dBm");
+disp("Theoretical RSRP for RX2: " + theoretical_rsrp2 + " dBm");
+disp("Theoretical RSRP for RX3: " + theoretical_rsrp3 + " dBm");
+disp("Theoretical RSRP for RX4: " + theoretical_rsrp4 + " dBm");
+
+% Расчет отклонений между практическими и теоретическими значениями
+delta1 = abs(ss1 - theoretical_rsrp1);
+delta2 = abs(ss2 - theoretical_rsrp2);
+delta3 = abs(ss3 - theoretical_rsrp3);
+delta4 = abs(ss4 - theoretical_rsrp4);
+
+% Нахождение минимального отклонения
+[min_delta, min_idx] = min([delta1, delta2, delta3, delta4]);
+
+disp(['Минимальное отклонение на точке: ', num2str(min_delta), ' dB']);
+
+% Конфигурация мини-радиусов для каждой точки
+radii1 = antennaConfiguration(antGain, Txpower, D1);
+radii2 = antennaConfiguration(antGain, Txpower, D2);
+radii3 = antennaConfiguration(antGain, Txpower, D3);
+radii4 = antennaConfiguration(antGain, Txpower, D4);
+
+% Проверка пересечений радиусов
+threshold = 5;  % Пороговое значение для пересечения радиусов
+if abs(radii1 - radii2) < threshold
+    disp('Радиусы RX1 и RX2 пересекаются');
+else
+    disp('Радиусы RX1 и RX2 не пересекаются');
+end
+
+if abs(radii2 - radii3) < threshold
+    disp('Радиусы RX2 и RX3 пересекаются');
+else
+    disp('Радиусы RX2 и RX3 не пересекаются');
+end
+
+if abs(radii3 - radii4) < threshold
+    disp('Радиусы RX3 и RX4 пересекаются');
+else
+    disp('Радиусы RX3 и RX4 не пересекаются');
+end
+
+% Функция для расчета теоретического RSRP
+function rsrp = theoretical_RSRP(D, Txpower, antGain, feedet, BW, rsrp_freq)
+    % Считаем потери на расстоянии
+    PL = pathLoss(D); % Потери на расстоянии
+    rsrp = Txpower + antGain - PL - feedet + 10*log10(BW) - 10*log10(rsrp_freq);
+end
+
+% Функция для расчета потерь на расстоянии (FSPL)
+function PL = pathLoss(D)
+    freq = 2.8e9;  % Частота передатчика
+    c = 3e8;       % Скорость света
+    lambda = c / freq;
+    FSPL = (4 * pi * D / lambda) ^ 2;
+    PL = 10 * log10(FSPL); % Потери в dB
+end
+
+% Функция для конфигурации мини-радиусов антенны
+function radii = antennaConfiguration(antGain, Txpower, D)
+    theta = 30; % Угол лепестка антенны
+    radius = (Txpower + antGain) - 20*log10(D);  % Простой расчет радиуса
+    radii = radius;  % Минимальные радиусы для каждой точки
+end
 
 % Задание углов и характеристик антенны
 azvec = -180:180; % Азимутальные углы (градусы)
