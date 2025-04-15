@@ -43,7 +43,6 @@ R_parallel = (epsilon * cos(tau_GR) - sqrt(epsilon - sin(tau_GR)^2)) / ...
 R_perpendicular = (cos(tau_GR) - sqrt(epsilon - sin(tau_GR)^2)) / ...
                    (cos(tau_GR) + sqrt(epsilon - sin(tau_GR)^2));
 
-% Покрытие передатчика (показывает радиус действия)
 coverage(tx, rtpm, ...
     SignalStrengths=-120:-5, ...
     MaxRange=250, ...
@@ -52,28 +51,24 @@ coverage(tx, rtpm, ...
 
 pause(20);
 
-% Приемник 1
 rx1 = rxsite(Name="Small cell receiver 1", ...
     Latitude=55.01314984273437, ...
     Longitude=82.94833302497865, ...
     AntennaHeight=0);
 los(tx, rx1)
 
-% Приемник 2
 rx2 = rxsite(Name="Small cell receiver 2", ...
     Latitude=55.0139680225036, ...
     Longitude=82.9491698741913, ...
     AntennaHeight=0);
 los(tx, rx2)
 
-% Приемник 3
 rx3 = rxsite(Name="Small cell receiver 3", ...
     Latitude=55.012756126219216, ...
     Longitude=82.94897675514221, ...
     AntennaHeight=0);
 los(tx, rx3)
 
-% Приемник 4
 rx4 = rxsite(Name="Small cell receiver 4", ...
     Latitude=55.01330698545722, ...
     Longitude=82.95013991951763, ...
@@ -179,6 +174,50 @@ signal_strengths_diffraction = [ss1_diffraction, ss2_diffraction, ss3_diffractio
 corr_matrix_diffraction = corrcoef(signal_strengths_diffraction);
 disp("Correlation matrix between received powers with diffraction: ")
 disp(corr_matrix_diffraction)
+pause(20);
+
+% === Расширенное моделирование погодных условий (влага, газы, туман) ===
+disp("=== Weather Condition Modeling (Extended) ===");
+
+% Расширенные параметры дождя
+rain = propagationModel("rain", ...
+    RainRate=20, ...                    % мм/ч — умеренный дождь
+    Polarization="horizontal", ...
+    RainHeight=3500);                  % Высота дождевого слоя (м)
+
+% Газовые потери
+gas = propagationModel("gas", ...
+    Temperature=20, ...                % Температура воздуха (°C)
+    Pressure=101.325, ...              % Давление (кПа)
+    WaterVaporDensity=7.5);            % Влага в воздухе (г/м³)
+
+% Туман/облачность
+fog = propagationModel("fog", ...
+    LiquidWaterDensity=0.2, ...        % Плотность воды в воздухе (г/м³)
+    Visibility=500);                   % Видимость (м)
+
+% Комбинируем модели
+rtPlusWeather = rtpm + gas + rain + fog;
+
+% Моделирование для всех приемников с погодными потерями
+raytrace(tx, rx1, rtPlusWeather); ss1_weather = sigstrength(rx1, tx, rtPlusWeather);
+disp("Received power at RX1 including weather loss: " + ss1_weather + " dBm")
+
+raytrace(tx, rx2, rtPlusWeather); ss2_weather = sigstrength(rx2, tx, rtPlusWeather);
+disp("Received power at RX2 including weather loss: " + ss2_weather + " dBm")
+
+raytrace(tx, rx3, rtPlusWeather); ss3_weather = sigstrength(rx3, tx, rtPlusWeather);
+disp("Received power at RX3 including weather loss: " + ss3_weather + " dBm")
+
+raytrace(tx, rx4, rtPlusWeather); ss4_weather = sigstrength(rx4, tx, rtPlusWeather);
+disp("Received power at RX4 including weather loss: " + ss4_weather + " dBm")
+
+% Корреляционная матрица
+signal_strengths_weather = [ss1_weather, ss2_weather, ss3_weather, ss4_weather];
+corr_matrix_weather = corrcoef(signal_strengths_weather);
+disp("Correlation matrix including weather impairments:")
+disp(corr_matrix_weather)
+
 pause(20);
 
 % Отображение на карте
