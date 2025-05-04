@@ -8,12 +8,8 @@ h_BS = 25; % высота БС, м
 h_UT = 1.5; % высота терминала, м
 bsData = struct();
 bsData.CI = [138256652];
-bsData.bsLat = 55.013389;
-bsData.bsLon = 82.950622;
-BsLat = bsData.bsLat;
-BsLon = bsData.bsLon;
-antennaAzimuth = 180; % Азимут антенны
-tilt = 5; % Наклон антенны (downtilt), градусы
+BsLat = 55.013389;
+BsLon = 82.950622;
 
 data = readtable('138256652.csv');
 
@@ -53,20 +49,6 @@ relativeAzimuth = mod(az_angle - antennaAzimuth, 360); % Относительн�
 relativeAzimuth(relativeAzimuth > 180) = relativeAzimuth(relativeAzimuth > 180) - 360; % Приведение к [-180, 180]
 el_angle = rad2deg(atan2(h_BS - h_UT, d_2D));
 
-angleToAntenna = zeros(numRows, 1);
-for i = 1:numRows
-    az_ant_rad = deg2rad(antennaAzimuth);
-    tilt_rad = deg2rad(tilt);
-    ant_vec = [cos(tilt_rad) * cos(az_ant_rad), cos(tilt_rad) * sin(az_ant_rad), sin(tilt_rad)];
-    az_rad = deg2rad(az_angle(i));
-    el_rad = deg2rad(el_angle(i));
-    ue_vec = [cos(el_rad) * cos(az_rad), cos(el_rad) * sin(az_rad), sin(el_rad)];
-    cos_theta = dot(ant_vec, ue_vec) / (norm(ant_vec) * norm(ue_vec));
-    cos_theta = min(max(cos_theta, -1), 1);
-    angleToAntenna(i) = rad2deg(acos(cos_theta));
-end
-
-
 %preliminary calculation for the Uma model, taking into account the distance
 P_LOS = ones(numRows, 1);
 idx = d_2D > 18;
@@ -75,14 +57,11 @@ P_LOS(idx) = (18 ./ d_2D(idx) + exp(-d_2D(idx)/63) .* (1 - 18 ./ d_2D(idx))) .* 
     d_BP = (2 * pi * h_BS * h_UT * f_c) / c;
 
 term = d_BP^2 + (h_BS - h_UT)^2;
-
 PL_LOS_base = 28.0 + 20 * log10(f_c_ghz) + 22 * log10(d_3D);
-
 idx_BP = d_2D > d_BP;
-
 PL_LOS_base(idx_BP) = 28.0 + 20 * log10(f_c_ghz) + 40 * log10(d_3D(idx_BP)) - 9 * log10(term);
-PL_NLOS_prime = 13.54 + 39.08 * log10(d_3D) + 20 * log10(f_c_ghz) - 0.6 * (h_UT - 1.5);
 
+PL_NLOS_prime = 13.54 + 39.08 * log10(d_3D) + 20 * log10(f_c_ghz) - 0.6 * (h_UT - 1.5);
 PL_NLOS_base = max(PL_LOS_base, PL_NLOS_prime);
 
 
