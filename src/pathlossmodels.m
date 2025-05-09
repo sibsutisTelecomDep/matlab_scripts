@@ -276,19 +276,22 @@ if exist('parfor', 'file')
         P_Tx_dBm_local = combinations(i, 1);
         L_cable_local = combinations(i, 2);
         
-        % Расчет RSRP для всех сценариев
-        rsrp_uma_los = P_Tx_dBm_local - L_cable_local - PL_UMA_LOS + G_tx;
-        rsrp_uma_nlos = P_Tx_dBm_local - L_cable_local - PL_UMA_NLOS + G_tx;
-        rsrp_rma_los = P_Tx_dBm_local - L_cable_local - PL_RMA_LOS + G_tx;
-        rsrp_rma_nlos = P_Tx_dBm_local - L_cable_local - PL_RMA_NLOS + G_tx;
-        rsrp_umi_los = P_Tx_dBm_local - L_cable_local - PL_UMI_LOS + G_tx;
-        rsrp_umi_nlos = P_Tx_dBm_local - L_cable_local - PL_UMI_NLOS + G_tx;
-        rsrp_inh_los = P_Tx_dBm_local - L_cable_local - PL_INH_LOS + G_tx;
-        rsrp_inh_nlos = P_Tx_dBm_local - L_cable_local - PL_INH_NLOS + G_tx;
-        rsrp_inf_sl_los = P_Tx_dBm_local - L_cable_local - PL_INF_SL_LOS + G_tx;
-        rsrp_inf_sl_nlos = P_Tx_dBm_local - L_cable_local - PL_INF_SL_NLOS + G_tx;
-        
-        % if ~all(isnan(PL_UMA_LOS_lib))
+        % Ширина полосы B (в Гц) для расчета RSRP
+        B = 1.4e6; % Предположим, что B уже задано
+
+        % Изменение формулы расчета RSRP
+        rsrp_uma_los = P_Tx_dBm_local - L_cable_local - PL_UMA_LOS + G_tx - 10 * log10(B);
+        rsrp_uma_nlos = P_Tx_dBm_local - L_cable_local - PL_UMA_NLOS + G_tx - 10 * log10(B);
+        rsrp_rma_los = P_Tx_dBm_local - L_cable_local - PL_RMA_LOS + G_tx - 10 * log10(B);
+        rsrp_rma_nlos = P_Tx_dBm_local - L_cable_local - PL_RMA_NLOS + G_tx - 10 * log10(B);
+        rsrp_umi_los = P_Tx_dBm_local - L_cable_local - PL_UMI_LOS + G_tx - 10 * log10(B);
+        rsrp_umi_nlos = P_Tx_dBm_local - L_cable_local - PL_UMI_NLOS + G_tx - 10 * log10(B);
+        rsrp_inh_los = P_Tx_dBm_local - L_cable_local - PL_INH_LOS + G_tx - 10 * log10(B);
+        rsrp_inh_nlos = P_Tx_dBm_local - L_cable_local - PL_INH_NLOS + G_tx - 10 * log10(B);
+        rsrp_inf_sl_los = P_Tx_dBm_local - L_cable_local - PL_INF_SL_LOS + G_tx - 10 * log10(B);
+        rsrp_inf_sl_nlos = P_Tx_dBm_local - L_cable_local - PL_INF_SL_NLOS + G_tx - 10 * log10(B);
+
+                % if ~all(isnan(PL_UMA_LOS_lib))
         %     rsrp_uma_los_lib = P_Tx_dBm_local - L_cable_local - PL_UMA_LOS_lib + G_tx;
         %     rsrp_uma_nlos_lib = P_Tx_dBm_local - L_cable_local - PL_UMA_NLOS_lib + G_tx;
         %     rsrp_rma_los_lib = P_Tx_dBm_local - L_cable_local - PL_RMA_LOS_lib + G_tx;
@@ -311,7 +314,7 @@ if exist('parfor', 'file')
         %     rsrp_inf_sl_los_lib = NaN(numRows, 1);
         %     rsrp_inf_sl_nlos_lib = NaN(numRows, 1);
         % end
-        
+
         % Разницы между измеренным и расчетным RSRP
         diff_uma_los = rsrpPhone - rsrp_uma_los;
         diff_uma_nlos = rsrpPhone - rsrp_uma_nlos;
@@ -384,9 +387,9 @@ if exist('parfor', 'file')
                 P_Tx_dBm_local = combinations(i, 1);
                 L_cable_local = combinations(i, 2);
                 
-                % Расчет RSRP для всех сценариев
-                rsrp_uma_los = P_Tx_dBm_local - L_cable_local - PL_UMA_LOS + G_tx;
-                rsrp_uma_nlos = P_Tx_dBm_local - L_cable_local - PL_UMA_NLOS + G_tx;
+                % Расчет RSRP для всех сценариев0
+                rsrp_uma_los = P_Tx_dBm_local - L_cable_local - PL_UMA_LOS + G_tx; % для LOS
+                rsrp_uma_nlos = P_Tx_dBm_local - L_cable_local - PL_UMA_NLOS + G_tx; % для NLOS
                 rsrp_rma_los = P_Tx_dBm_local - L_cable_local - PL_RMA_LOS + G_tx;
                 rsrp_rma_nlos = P_Tx_dBm_local - L_cable_local - PL_RMA_NLOS + G_tx;
                 rsrp_umi_los = P_Tx_dBm_local - L_cable_local - PL_UMI_LOS + G_tx;
@@ -395,7 +398,7 @@ if exist('parfor', 'file')
                 rsrp_inh_nlos = P_Tx_dBm_local - L_cable_local - PL_INH_NLOS + G_tx;
                 rsrp_inf_sl_los = P_Tx_dBm_local - L_cable_local - PL_INF_SL_LOS + G_tx;
                 rsrp_inf_sl_nlos = P_Tx_dBm_local - L_cable_local - PL_INF_SL_NLOS + G_tx;
-                
+
                 % if ~all(isnan(PL_UMA_LOS_lib))
                 %     rsrp_uma_los_lib = P_Tx_dBm_local - L_cable_local - PL_UMA_LOS_lib + G_tx;
                 %     rsrp_uma_nlos_lib = P_Tx_dBm_local - L_cable_local - PL_UMA_NLOS_lib + G_tx;
